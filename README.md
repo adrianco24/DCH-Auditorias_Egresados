@@ -32,6 +32,7 @@ Abrí la URL que imprime Vite.
 ## Qué muestra
 
 - Trámites únicos (no filas: cada fila es un cambio de estado)
+- Filtros de fecha independientes e inclusivos para inicio del trámite y fecha de movimiento. Si se combinan, cada movimiento debe cumplir ambos rangos; el detalle y el CSV respetan esos filtros.
 - Estado de requisitos: A = aceptado, P = pendiente, B = abierto; anulado = 1 se clasifica como anulado
 - El filtro Estado ofrece Aceptado (A no anulado), Anulado y Todos; en Todos también aparecen P y B no anulados. El filtro Etapa del trámite selecciona el estado del movimiento.
 - Desglose de trámites anulados por estado de requisitos (B, P y otros), según el último movimiento dentro de los filtros; combiná los filtros Estado y Estado de requisitos para revisar cada grupo

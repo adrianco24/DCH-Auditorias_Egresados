@@ -5,6 +5,8 @@ export type Resultado = "aceptado" | "pendiente" | "abierto" | "anulado" | "otro
 export type Filters = {
   desde: string;
   hasta: string;
+  inicioDesde: string;
+  inicioHasta: string;
   usuario: string;
   resultado: string;
   requisitos: string;
@@ -72,8 +74,12 @@ export function requiereAlertaDemora(row: Row) {
 
 export function applyFilters(rows: Row[], f: Filters) {
   return rows.filter((row) => {
+    if ((f.desde || f.hasta) && !row.fecha) return false;
     if (f.desde && row.fecha < f.desde) return false;
     if (f.hasta && row.fecha > f.hasta) return false;
+    if ((f.inicioDesde || f.inicioHasta) && !row.fechaInicio) return false;
+    if (f.inicioDesde && row.fechaInicio < f.inicioDesde) return false;
+    if (f.inicioHasta && row.fechaInicio > f.inicioHasta) return false;
     if (f.usuario && row.usuario !== f.usuario) return false;
     if (f.propuesta && row.propuesta !== f.propuesta) return false;
     if (f.estado && row.estadoNuevo !== f.estado) return false;

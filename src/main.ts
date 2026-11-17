@@ -31,6 +31,8 @@ const usuariosArea = new Set([
 const filters: Filters = {
   desde: "",
   hasta: "",
+  inicioDesde: "",
+  inicioHasta: "",
   usuario: "",
   resultado: "",
   requisitos: "",
@@ -166,10 +168,16 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
     <p class="area-notice">Mostrando únicamente los movimientos del personal del área.</p>
 
     <section class="filters">
-      <label>Desde
+      <label>Inicio del trámite desde
+        <input type="date" id="inicioDesde" value="${filters.inicioDesde}">
+      </label>
+      <label>Inicio del trámite hasta
+        <input type="date" id="inicioHasta" value="${filters.inicioHasta}">
+      </label>
+      <label>Movimiento desde
         <input type="date" id="desde" value="${filters.desde}">
       </label>
-      <label>Hasta
+      <label>Movimiento hasta
         <input type="date" id="hasta" value="${filters.hasta}">
       </label>
       <label>Usuario
@@ -204,6 +212,7 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
         <input type="search" id="q" placeholder="Alumno, solicitud, DNI…" value="${escapeAttr(filters.q)}">
       </label>
     </section>
+    <p class="caption">Los rangos son inclusivos y se combinan: la fecha de movimiento limita los movimientos mostrados y descargados.</p>
 
     <section class="kpis">
       <article><strong>${last.size}</strong><span>Trámites únicos</span></article>
@@ -337,7 +346,7 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
         <table>
           <thead>
             <tr>
-              <th>Fecha</th><th>Solicitud</th><th>Alumno</th><th>Carrera</th>
+              <th>Inicio del trámite</th><th>Fecha del movimiento</th><th>Solicitud</th><th>Alumno</th><th>Carrera</th>
               <th>Usuario</th><th>Estado del movimiento</th><th>Estado actual</th><th>Días totales</th><th>Alerta</th><th>Resultado</th><th>Estado de requisitos</th><th>Observación</th>
             </tr>
           </thead>
@@ -356,6 +365,7 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
                 const actual = actualPorSolicitud.get(r.nroSolicitud);
                 const alerta = actual !== undefined && requiereAlertaDemora(actual);
                 return `<tr>
+                  <td>${r.fechaInicio ? formatDate(r.fechaInicio) : "Sin dato"}</td>
                   <td>${formatDate(r.fecha)}</td>
                   <td>${escapeHtml(r.nroSolicitud)}</td>
                   <td>${escapeHtml(r.apellidoNombres)}</td>
@@ -384,6 +394,8 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
       render(all, files, actualPorSolicitud);
     });
   };
+  bind("inicioDesde", "change");
+  bind("inicioHasta", "change");
   bind("desde", "change");
   bind("hasta", "change");
   bind("usuario", "change");
