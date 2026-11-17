@@ -1,7 +1,8 @@
 const COLORS = {
   aceptado: "#1f7a4d",
-  observado: "#b42318",
-  baja: "#b54708",
+  pendiente: "#185fa5",
+  abierto: "#b54708",
+  anulado: "#b42318",
   info: "#185fa5",
   muted: "#8a7e6d",
   axis: "#6f675c",

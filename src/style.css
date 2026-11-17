@@ -85,6 +85,7 @@ input, select {
 .kpis .ok strong { color: var(--ok); }
 .kpis .bad strong { color: var(--bad); }
 .kpis .warn strong { color: var(--warn); }
+.kpis .info strong { color: var(--info); }
 
 .grid-2 { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 28px; margin-bottom: 32px; }
 .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1.1fr; gap: 24px; margin-bottom: 32px; }
@@ -134,11 +135,21 @@ tbody tr:last-child td { border-bottom: 0; }
   border-radius: 999px;
 }
 .tag.aceptado { color: var(--ok); background: #e5f4ea; }
-.tag.observado { color: var(--bad); background: #fde8e6; }
-.tag.baja { color: var(--warn); background: #fbeee3; }
+.tag.pendiente { color: var(--info); background: #e8f1fb; }
+.tag.abierto { color: var(--warn); background: #fbeee3; }
+.tag.anulado { color: var(--bad); background: #fde8e6; }
 .tag.otro { color: var(--muted); background: #eeeae2; }
 
 .boot { padding: 48px 8px; color: var(--muted); }
+
+.delay-summary {
+  padding: 10px 12px;
+  border: 1px solid #e7c18e;
+  border-radius: 6px;
+  background: #fbeee3;
+  color: #713b0b;
+  font-weight: 650;
+}
 
 .area-notice {
   margin: 14px 0 0;

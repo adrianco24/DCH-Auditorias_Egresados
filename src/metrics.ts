@@ -1,6 +1,6 @@
 import type { Row } from "./parse";
 
-export type Resultado = "aceptado" | "observado" | "baja" | "otro";
+export type Resultado = "aceptado" | "pendiente" | "abierto" | "anulado" | "otro";
 
 export type Filters = {
   desde: string;
@@ -13,16 +13,18 @@ export type Filters = {
 };
 
 export function resultadoDe(row: Row): Resultado {
-  if (row.estadoRequisitos === "A" && !row.anulado) return "aceptado";
-  if (row.estadoRequisitos === "P") return "observado";
-  if (row.estadoRequisitos === "B") return "baja";
+  if (row.anulado) return "anulado";
+  if (row.estadoRequisitos === "A") return "aceptado";
+  if (row.estadoRequisitos === "P") return "pendiente";
+  if (row.estadoRequisitos === "B") return "abierto";
   return "otro";
 }
 
 export const RESULTADO_LABEL: Record<Resultado, string> = {
   aceptado: "Aceptado",
-  observado: "Observado (P)",
-  baja: "Baja / abierto (B)",
+  pendiente: "Pendiente (P)",
+  abierto: "Abierto (B)",
+  anulado: "Anulado",
   otro: "Otro",
 };
 
@@ -61,6 +63,12 @@ export function lastBySolicitud(rows: Row[]) {
   return map;
 }
 
+export function requiereAlertaDemora(row: Row) {
+  return resultadoDe(row) === "aceptado"
+    && row.diasTotales > 90
+    && row.estadoNuevo.trim().toLocaleLowerCase("es") !== "diplomado";
+}
+
 export function applyFilters(rows: Row[], f: Filters) {
   return rows.filter((row) => {
     if (f.desde && row.fecha < f.desde) return false;
@@ -91,9 +99,9 @@ export type UserStat = {
   tramites: number;
   movimientos: number;
   aceptados: number;
-  observados: number;
-  baja: number;
-  dias: number;
+  pendientes: number;
+  abiertos: number;
+  anulados: number;
 };
 
 export function userStats(rows: Row[]): UserStat[] {
@@ -107,22 +115,24 @@ export function userStats(rows: Row[]): UserStat[] {
   for (const [usuario, list] of byUser) {
     const last = lastBySolicitud(list);
     let aceptados = 0;
-    let observados = 0;
-    let baja = 0;
+    let pendientes = 0;
+    let abiertos = 0;
+    let anulados = 0;
     for (const row of last.values()) {
       const r = resultadoDe(row);
       if (r === "aceptado") aceptados++;
-      else if (r === "observado") observados++;
-      else if (r === "baja") baja++;
+      else if (r === "pendiente") pendientes++;
+      else if (r === "abierto") abiertos++;
+      else if (r === "anulado") anulados++;
     }
     stats.push({
       usuario,
       tramites: last.size,
       movimientos: list.length,
       aceptados,
-      observados,
-      baja,
-      dias: new Set(list.map((r) => r.fecha)).size,
+      pendientes,
+      abiertos,
+      anulados,
     });
   }
   return stats.sort((a, b) => b.tramites - a.tramites);

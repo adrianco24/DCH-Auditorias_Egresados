@@ -8,6 +8,7 @@ import {
   formatDate,
   lastBySolicitud,
   motiveOf,
+  requiereAlertaDemora,
   resultadoDe,
   shortEstado,
   shortName,
@@ -125,11 +126,15 @@ async function loadRows(): Promise<{ rows: Row[]; files: string[] }> {
   return { rows: dedupe(chunks.flat()), files };
 }
 
-function render(all: Row[], files: string[]) {
+function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row>) {
   const fechas = unique(all.map((r) => r.fecha));
   const filtered = applyFilters(all, filters);
   const last = lastBySolicitud(filtered);
   const lastRows = [...last.values()];
+  const alertas = lastRows.filter((row) => {
+    const actual = actualPorSolicitud.get(row.nroSolicitud);
+    return actual !== undefined && requiereAlertaDemora(actual);
+  }).length;
   const users = userStats(filtered);
   const daily = dailySeries(filtered);
   const resultados = countMap(lastRows.map(resultadoDe));
@@ -140,8 +145,9 @@ function render(all: Row[], files: string[]) {
   ).slice(0, 8);
 
   const nAcept = lastRows.filter((r) => resultadoDe(r) === "aceptado").length;
-  const nObs = lastRows.filter((r) => resultadoDe(r) === "observado").length;
-  const nBaja = lastRows.filter((r) => resultadoDe(r) === "baja").length;
+  const nPendiente = lastRows.filter((r) => resultadoDe(r) === "pendiente").length;
+  const nAbierto = lastRows.filter((r) => resultadoDe(r) === "abierto").length;
+  const nAnulado = lastRows.filter((r) => resultadoDe(r) === "anulado").length;
 
   app.innerHTML = `
     <header class="top">
@@ -168,7 +174,7 @@ function render(all: Row[], files: string[]) {
       <label>Resultado
         <select id="resultado">
           <option value="">Todos</option>
-          ${(["aceptado", "observado", "baja", "otro"] as Resultado[])
+          ${(["aceptado", "pendiente", "abierto", "anulado", "otro"] as Resultado[])
             .map(
               (k) =>
                 `<option value="${k}" ${filters.resultado === k ? "selected" : ""}>${RESULTADO_LABEL[k]}</option>`,
@@ -190,8 +196,9 @@ function render(all: Row[], files: string[]) {
     <section class="kpis">
       <article><strong>${last.size}</strong><span>Trámites únicos</span></article>
       <article class="ok"><strong>${nAcept}</strong><span>Aceptados</span></article>
-      <article class="bad"><strong>${nObs}</strong><span>Observados</span></article>
-      <article class="warn"><strong>${nBaja}</strong><span>Baja / abierto</span></article>
+      <article class="info"><strong>${nPendiente}</strong><span>Pendientes</span></article>
+      <article class="warn"><strong>${nAbierto}</strong><span>Abiertos</span></article>
+      <article class="bad"><strong>${nAnulado}</strong><span>Anulados</span></article>
       <article><strong>${filtered.length}</strong><span>Movimientos</span></article>
     </section>
 
@@ -205,8 +212,9 @@ function render(all: Row[], files: string[]) {
                 users.map((u) => shortName(u.usuario)),
                 [
                   { name: "Aceptados", color: COLORS.aceptado, data: users.map((u) => u.aceptados) },
-                  { name: "Observados", color: COLORS.observado, data: users.map((u) => u.observados) },
-                  { name: "Baja / abierto", color: COLORS.baja, data: users.map((u) => u.baja) },
+                  { name: "Pendientes", color: COLORS.pendiente, data: users.map((u) => u.pendientes) },
+                  { name: "Abiertos", color: COLORS.abierto, data: users.map((u) => u.abiertos) },
+                  { name: "Anulados", color: COLORS.anulado, data: users.map((u) => u.anulados) },
                 ],
               )
             : "<p>No hay datos con estos filtros.</p>"
@@ -215,7 +223,7 @@ function render(all: Row[], files: string[]) {
           <table>
             <thead>
               <tr>
-                <th>Usuario</th><th>Trámites</th><th>Aceptados</th><th>P</th><th>B</th><th>Movimientos</th><th>Días</th>
+                <th>Usuario</th><th>Trámites</th><th>Aceptados</th><th>Pendientes</th><th>Abiertos</th><th>Anulados</th><th>Movimientos</th>
               </tr>
             </thead>
             <tbody>
@@ -223,8 +231,8 @@ function render(all: Row[], files: string[]) {
                 .map(
                   (u) => `<tr>
                     <td>${escapeHtml(u.usuario)}</td>
-                    <td>${u.tramites}</td><td>${u.aceptados}</td><td>${u.observados}</td><td>${u.baja}</td>
-                    <td>${u.movimientos}</td><td>${u.dias}</td>
+                    <td>${u.tramites}</td><td>${u.aceptados}</td><td>${u.pendientes}</td><td>${u.abiertos}</td><td>${u.anulados}</td>
+                    <td>${u.movimientos}</td>
                   </tr>`,
                 )
                 .join("")}
@@ -253,14 +261,7 @@ function render(all: Row[], files: string[]) {
           resultados.map(([k, v]) => ({
             label: RESULTADO_LABEL[k as Resultado] ?? k,
             value: v,
-            color:
-              k === "aceptado"
-                ? COLORS.aceptado
-                : k === "observado"
-                  ? COLORS.observado
-                  : k === "baja"
-                    ? COLORS.baja
-                    : COLORS.muted,
+            color: COLORS[k as keyof typeof COLORS] ?? COLORS.muted,
           })),
         )}
       </div>
@@ -270,7 +271,7 @@ function render(all: Row[], files: string[]) {
           pipeline.map(([k, v], i) => ({
             label: shortEstado(k),
             value: v,
-            color: [COLORS.info, COLORS.baja, COLORS.aceptado, COLORS.muted, COLORS.observado][i % 5],
+            color: [COLORS.info, COLORS.abierto, COLORS.aceptado, COLORS.muted, COLORS.pendiente][i % 5],
           })),
         )}
       </div>
@@ -280,7 +281,7 @@ function render(all: Row[], files: string[]) {
           motives.length
             ? stackedBars(
                 motives.map(([k]) => k),
-                [{ name: "Trámites", color: COLORS.observado, data: motives.map(([, v]) => v) }],
+                [{ name: "Trámites", color: COLORS.anulado, data: motives.map(([, v]) => v) }],
                 { height: 260 },
               )
             : "<p>No hay anulados en el filtro.</p>"
@@ -308,20 +309,30 @@ function render(all: Row[], files: string[]) {
         </button>
       </div>
       <p class="caption">La descarga incluye todos los movimientos que cumplen los filtros, no solo el último de cada trámite.</p>
+      <p class="delay-summary" role="status">Alerta: ${alertas} trámite${alertas === 1 ? "" : "s"} aceptado${alertas === 1 ? "" : "s"}, con más de 90 días y sin estado Diplomado.</p>
+      <p class="caption">Días totales y estado actual corresponden al último movimiento del CSV, incluso si lo realizó otro usuario. Se muestran hasta 250 trámites, con las alertas primero.</p>
       <div class="table-wrap tall">
         <table>
           <thead>
             <tr>
               <th>Fecha</th><th>Solicitud</th><th>Alumno</th><th>Carrera</th>
-              <th>Usuario</th><th>Estado</th><th>Resultado</th><th>Observación</th>
+              <th>Usuario</th><th>Estado del movimiento</th><th>Estado actual</th><th>Días totales</th><th>Alerta</th><th>Resultado</th><th>Observación</th>
             </tr>
           </thead>
           <tbody>
             ${lastRows
-              .sort((a, b) => b.fecha.localeCompare(a.fecha) || Number(b.nroSolicitud) - Number(a.nroSolicitud))
+              .sort((a, b) => {
+                const actualA = actualPorSolicitud.get(a.nroSolicitud);
+                const actualB = actualPorSolicitud.get(b.nroSolicitud);
+                const alertaA = actualA !== undefined && requiereAlertaDemora(actualA);
+                const alertaB = actualB !== undefined && requiereAlertaDemora(actualB);
+                return Number(alertaB) - Number(alertaA) || b.fecha.localeCompare(a.fecha) || Number(b.nroSolicitud) - Number(a.nroSolicitud);
+              })
               .slice(0, 250)
               .map((r) => {
                 const res = resultadoDe(r);
+                const actual = actualPorSolicitud.get(r.nroSolicitud);
+                const alerta = actual !== undefined && requiereAlertaDemora(actual);
                 return `<tr>
                   <td>${formatDate(r.fecha)}</td>
                   <td>${escapeHtml(r.nroSolicitud)}</td>
@@ -329,6 +340,9 @@ function render(all: Row[], files: string[]) {
                   <td>${escapeHtml(r.propuesta)}</td>
                   <td>${escapeHtml(r.usuario)}</td>
                   <td>${escapeHtml(shortEstado(r.estadoNuevo))}</td>
+                  <td>${actual ? escapeHtml(shortEstado(actual.estadoNuevo)) : "No disponible"}</td>
+                  <td>${actual ? actual.diasTotales : "No disponible"}</td>
+                  <td>${alerta ? '<span class="tag anulado">Más de 90 días sin diplomar</span>' : "—"}</td>
                   <td><span class="tag ${res}">${RESULTADO_LABEL[res]}</span></td>
                   <td>${escapeHtml(r.observaciones)}</td>
                 </tr>`;
@@ -344,7 +358,7 @@ function render(all: Row[], files: string[]) {
     const el = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null;
     el?.addEventListener(event, () => {
       filters[id] = el.value;
-      render(all, files);
+      render(all, files, actualPorSolicitud);
     });
   };
   bind("desde", "change");
@@ -355,7 +369,7 @@ function render(all: Row[], files: string[]) {
   bind("estado", "change");
   document.getElementById("q")?.addEventListener("input", (e) => {
     filters.q = (e.target as HTMLInputElement).value;
-    render(all, files);
+    render(all, files, actualPorSolicitud);
   });
   document.getElementById("download-csv")?.addEventListener("click", () => downloadCsv(filtered));
 }
@@ -369,7 +383,7 @@ function loadDashboard() {
         app.innerHTML = `<p class="boot">No hay CSV en <code>public/data</code>. Copiá el reporte ahí y hacé push.</p>`;
         return;
       }
-      render(rows.filter((row) => usuariosArea.has(row.usuario)), files);
+      render(rows.filter((row) => usuariosArea.has(row.usuario)), files, lastBySolicitud(rows));
     })
     .catch((err: Error) => {
       app.innerHTML = `<p class="boot">No se pudo leer el reporte: ${escapeHtml(err.message)}</p>`;
