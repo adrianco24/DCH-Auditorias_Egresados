@@ -2,6 +2,8 @@
 
 Sitio estático con el reporte de egresados. Cada `git push` a `main` publica el tablero en GitHub Pages.
 
+**Importante:** GitHub Pages es público. La pantalla de acceso es solo visual y no protege los datos; publicá únicamente archivos anonimizados en `public/data/`.
+
 ## Flujo de todos los días
 
 1. Bajá el CSV del sistema.

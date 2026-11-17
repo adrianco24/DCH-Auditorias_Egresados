@@ -292,16 +292,44 @@ function render(all: Row[], files: string[]) {
   });
 }
 
-app.innerHTML = `<p class="boot">Cargando reportes…</p>`;
+function loadDashboard() {
+  app.innerHTML = `<p class="boot">Cargando reportes…</p>`;
 
-loadRows()
-  .then(({ rows, files }) => {
-    if (!files.length) {
-      app.innerHTML = `<p class="boot">No hay CSV en <code>public/data</code>. Copiá el reporte ahí y hacé push.</p>`;
-      return;
-    }
-    render(rows, files);
-  })
-  .catch((err: Error) => {
-    app.innerHTML = `<p class="boot">No se pudo leer el reporte: ${escapeHtml(err.message)}</p>`;
+  loadRows()
+    .then(({ rows, files }) => {
+      if (!files.length) {
+        app.innerHTML = `<p class="boot">No hay CSV en <code>public/data</code>. Copiá el reporte ahí y hacé push.</p>`;
+        return;
+      }
+      render(rows, files);
+    })
+    .catch((err: Error) => {
+      app.innerHTML = `<p class="boot">No se pudo leer el reporte: ${escapeHtml(err.message)}</p>`;
+    });
+}
+
+function renderLogin() {
+  app.innerHTML = `
+    <section class="login-card">
+      <p class="eyebrow">EGRE · egresados</p>
+      <h1>Acceso al tablero</h1>
+      <p class="login-warning">Esta pantalla es solo demostrativa: no verifica la identidad ni protege los datos. El sitio y sus archivos siguen siendo públicos.</p>
+      <form id="login-form">
+        <label>Usuario
+          <input id="login-user" name="username" autocomplete="username" required>
+        </label>
+        <label>Contraseña
+          <input name="password" type="password" autocomplete="current-password" required>
+        </label>
+        <button type="submit">Continuar</button>
+      </form>
+    </section>
+  `;
+
+  document.getElementById("login-form")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    loadDashboard();
   });
+}
+
+renderLogin();
