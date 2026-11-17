@@ -175,10 +175,10 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
       <label>Usuario
         <select id="usuario">${optionList(unique(all.map((r) => r.usuario)), filters.usuario, "Todos")}</select>
       </label>
-      <label>Resultado
+      <label>Estado
         <select id="resultado">
           <option value="">Todos</option>
-          ${(["aceptado", "pendiente", "abierto", "anulado", "otro"] as Resultado[])
+          ${(["aceptado", "anulado"] as const)
             .map(
               (k) =>
                 `<option value="${k}" ${filters.resultado === k ? "selected" : ""}>${RESULTADO_LABEL[k]}</option>`,
@@ -197,7 +197,7 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
       <label>Carrera
         <select id="propuesta">${optionList(unique(all.map((r) => r.propuesta)), filters.propuesta, "Todas")}</select>
       </label>
-      <label>Estado
+      <label>Etapa del trámite
         <select id="estado">${optionList(unique(all.map((r) => r.estadoNuevo)), filters.estado, "Todos")}</select>
       </label>
       <label class="grow">Buscar
@@ -216,7 +216,7 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
 
     <section class="annulled-breakdown" aria-labelledby="annulled-heading">
       <h2 id="annulled-heading">Desglose de anulados</h2>
-      <p class="caption">Trámites únicos según su último movimiento dentro de los filtros. Para ver cuáles son, seleccioná Resultado: Anulado y Estado de requisitos: B o P.</p>
+      <p class="caption">Trámites únicos según su último movimiento dentro de los filtros. Para ver cuáles son, seleccioná Estado: Anulado y Estado de requisitos: B o P.</p>
       <div class="chips">
         <span class="chip">Abiertos (B) <b>${anuladosB}</b></span>
         <span class="chip">Pendientes (P) <b>${anuladosP}</b></span>
