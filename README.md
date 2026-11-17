@@ -33,6 +33,7 @@ Abrí la URL que imprime Vite.
 
 - Trámites únicos (no filas: cada fila es un cambio de estado)
 - Estado de requisitos: A = aceptado, P = pendiente, B = abierto; anulado = 1 se clasifica como anulado
+- Desglose de trámites anulados por estado de requisitos (B, P y otros), según el último movimiento dentro de los filtros; combiná los filtros Resultado y Estado de requisitos para revisar cada grupo
 - Productividad por usuario
 - Volumen diario, pipeline, motivos y detalle filtrable
 - En el detalle, alerta para trámites aceptados y no anulados con más de 90 días totales cuyo último estado en el CSV no es «Diplomado», incluso si otro usuario realizó ese movimiento. Los datos se actualizan al subir un nuevo CSV; no se recalculan diariamente.

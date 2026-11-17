@@ -7,6 +7,7 @@ export type Filters = {
   hasta: string;
   usuario: string;
   resultado: string;
+  requisitos: string;
   propuesta: string;
   estado: string;
   q: string;
@@ -77,6 +78,7 @@ export function applyFilters(rows: Row[], f: Filters) {
     if (f.propuesta && row.propuesta !== f.propuesta) return false;
     if (f.estado && row.estadoNuevo !== f.estado) return false;
     if (f.resultado && resultadoDe(row) !== f.resultado) return false;
+    if (f.requisitos && row.estadoRequisitos !== f.requisitos) return false;
     if (f.q) {
       const blob = [
         row.apellidoNombres,

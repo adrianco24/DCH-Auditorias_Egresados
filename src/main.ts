@@ -33,6 +33,7 @@ const filters: Filters = {
   hasta: "",
   usuario: "",
   resultado: "",
+  requisitos: "",
   propuesta: "",
   estado: "",
   q: "",
@@ -148,6 +149,9 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
   const nPendiente = lastRows.filter((r) => resultadoDe(r) === "pendiente").length;
   const nAbierto = lastRows.filter((r) => resultadoDe(r) === "abierto").length;
   const nAnulado = lastRows.filter((r) => resultadoDe(r) === "anulado").length;
+  const anuladosB = lastRows.filter((r) => r.anulado && r.estadoRequisitos === "B").length;
+  const anuladosP = lastRows.filter((r) => r.anulado && r.estadoRequisitos === "P").length;
+  const otrosAnulados = nAnulado - anuladosB - anuladosP;
 
   app.innerHTML = `
     <header class="top">
@@ -182,6 +186,14 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
             .join("")}
         </select>
       </label>
+      <label>Estado de requisitos
+        <select id="requisitos">
+          <option value="">Todos</option>
+          ${[["A", "Aceptado (A)"], ["P", "Pendiente (P)"], ["B", "Abierto (B)"]]
+            .map(([value, label]) => `<option value="${value}" ${filters.requisitos === value ? "selected" : ""}>${label}</option>`)
+            .join("")}
+        </select>
+      </label>
       <label>Carrera
         <select id="propuesta">${optionList(unique(all.map((r) => r.propuesta)), filters.propuesta, "Todas")}</select>
       </label>
@@ -200,6 +212,16 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
       <article class="warn"><strong>${nAbierto}</strong><span>Abiertos</span></article>
       <article class="bad"><strong>${nAnulado}</strong><span>Anulados</span></article>
       <article><strong>${filtered.length}</strong><span>Movimientos</span></article>
+    </section>
+
+    <section class="annulled-breakdown" aria-labelledby="annulled-heading">
+      <h2 id="annulled-heading">Desglose de anulados</h2>
+      <p class="caption">Trámites únicos según su último movimiento dentro de los filtros. Para ver cuáles son, seleccioná Resultado: Anulado y Estado de requisitos: B o P.</p>
+      <div class="chips">
+        <span class="chip">Abiertos (B) <b>${anuladosB}</b></span>
+        <span class="chip">Pendientes (P) <b>${anuladosP}</b></span>
+        <span class="chip">Otros estados <b>${otrosAnulados}</b></span>
+      </div>
     </section>
 
     <section class="grid-2">
@@ -316,7 +338,7 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
           <thead>
             <tr>
               <th>Fecha</th><th>Solicitud</th><th>Alumno</th><th>Carrera</th>
-              <th>Usuario</th><th>Estado del movimiento</th><th>Estado actual</th><th>Días totales</th><th>Alerta</th><th>Resultado</th><th>Observación</th>
+              <th>Usuario</th><th>Estado del movimiento</th><th>Estado actual</th><th>Días totales</th><th>Alerta</th><th>Resultado</th><th>Estado de requisitos</th><th>Observación</th>
             </tr>
           </thead>
           <tbody>
@@ -344,6 +366,7 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
                   <td>${actual ? actual.diasTotales : "No disponible"}</td>
                   <td>${alerta ? '<span class="tag anulado">Más de 90 días sin diplomar</span>' : "—"}</td>
                   <td><span class="tag ${res}">${RESULTADO_LABEL[res]}</span></td>
+                  <td>${escapeHtml(r.estadoRequisitos) || "Sin dato"}</td>
                   <td>${escapeHtml(r.observaciones)}</td>
                 </tr>`;
               })
@@ -365,6 +388,7 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
   bind("hasta", "change");
   bind("usuario", "change");
   bind("resultado", "change");
+  bind("requisitos", "change");
   bind("propuesta", "change");
   bind("estado", "change");
   document.getElementById("q")?.addEventListener("input", (e) => {
