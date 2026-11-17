@@ -159,7 +159,7 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
     <header class="top">
       <div>
         <p class="eyebrow">UNNE · egresados</p>
-        <h1>Tablero de auditorías EGRE</h1>
+        <h1>Tablero de auditorías de EGRESADOS de la Facultad de Derecho</h1>
         <p class="sub">${files.length} archivo${files.length === 1 ? "" : "s"} · ${all.length} movimientos · ${lastBySolicitud(all).size} trámites · ${fechas.length ? `${formatDate(fechas[0])} – ${formatDate(fechas.at(-1)!)}` : "sin fechas"}</p>
       </div>
       <p class="hint">Actualizá el CSV, hacé <code>git push</code> y este tablero se republica solo.</p>

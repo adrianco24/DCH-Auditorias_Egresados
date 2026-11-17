@@ -1,4 +1,4 @@
-# EGRE · Tablero de auditorías
+# Tablero de auditorías de EGRESADOS de la Facultad de Derecho
 
 Sitio estático con el reporte de egresados. Cada `git push` a `main` publica el tablero en GitHub Pages.
 
