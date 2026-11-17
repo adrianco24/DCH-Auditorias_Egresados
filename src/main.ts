@@ -429,9 +429,8 @@ function loadDashboard() {
 function renderLogin() {
   app.innerHTML = `
     <section class="login-card">
-      <p class="eyebrow">EGRE · egresados</p>
+      <p class="eyebrow">EGRESADOS AUDITORIAS</p>
       <h1>Acceso al tablero</h1>
-      <p class="login-warning">Esta pantalla es solo demostrativa: no verifica la identidad ni protege los datos. El sitio y sus archivos siguen siendo públicos.</p>
       <form id="login-form">
         <label>Usuario
           <input id="login-user" name="username" autocomplete="username" required>
