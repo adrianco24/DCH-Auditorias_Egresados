@@ -19,6 +19,14 @@ import { dedupe, rowsFromCsv, type Row } from "./parse";
 
 const app = document.querySelector("#app")!;
 
+const usuariosArea = new Set([
+  "LOPEZ JOSE DANIEL",
+  "LEDESMA YAMILA GISELLE",
+  "GOMEZ JOANA MARISOL",
+  "D'ANDREA FLORENCIA LORENA",
+  "MEZA JULIA MARCELA",
+]);
+
 const filters: Filters = {
   desde: "",
   hasta: "",
@@ -51,6 +59,55 @@ function escapeHtml(value: string) {
 
 function escapeAttr(value: string) {
   return escapeHtml(value).replaceAll('"', "&quot;");
+}
+
+function downloadCsv(rows: Row[]) {
+  const headers = [
+    "observaciones",
+    "anulado",
+    "estado_requisitos",
+    "alumno",
+    "nro_solicitud",
+    "propuesta_nombre",
+    "fecha_inicio_tramite",
+    "paso",
+    "fecha",
+    "estado_anterior",
+    "estado_nuevo",
+    "usuario_cambio",
+    "dias_entre_estados",
+    "dias_totales_tramite",
+  ];
+  const values = rows.map((row) => [
+    row.observaciones,
+    row.anulado ? "1" : "0",
+    row.estadoRequisitos,
+    row.alumno,
+    row.nroSolicitud,
+    row.propuesta,
+    row.fechaInicio,
+    row.paso,
+    row.fecha,
+    row.estadoAnterior,
+    row.estadoNuevo,
+    row.usuario,
+    row.diasEntre,
+    row.diasTotales,
+  ]);
+  const csv = [headers, ...values]
+    .map((record) =>
+      record
+        .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+        .join(","),
+    )
+    .join("\r\n");
+  const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `egre-filtrado-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 async function loadRows(): Promise<{ rows: Row[]; files: string[] }> {
@@ -95,6 +152,8 @@ function render(all: Row[], files: string[]) {
       </div>
       <p class="hint">Actualizá el CSV, hacé <code>git push</code> y este tablero se republica solo.</p>
     </header>
+
+    <p class="area-notice">Mostrando únicamente los movimientos del personal del área.</p>
 
     <section class="filters">
       <label>Desde
@@ -239,8 +298,16 @@ function render(all: Row[], files: string[]) {
     </section>
 
     <section>
-      <h2>Detalle</h2>
-      <p class="caption">Último movimiento de cada trámite en el filtro · ${lastRows.length} filas</p>
+      <div class="detail-heading">
+        <div>
+          <h2>Detalle</h2>
+          <p class="caption">Último movimiento de cada trámite en el filtro · ${lastRows.length} filas</p>
+        </div>
+        <button class="download-button" id="download-csv" type="button" ${filtered.length ? "" : "disabled"}>
+          Descargar CSV filtrado · ${filtered.length} movimientos
+        </button>
+      </div>
+      <p class="caption">La descarga incluye todos los movimientos que cumplen los filtros, no solo el último de cada trámite.</p>
       <div class="table-wrap tall">
         <table>
           <thead>
@@ -290,6 +357,7 @@ function render(all: Row[], files: string[]) {
     filters.q = (e.target as HTMLInputElement).value;
     render(all, files);
   });
+  document.getElementById("download-csv")?.addEventListener("click", () => downloadCsv(filtered));
 }
 
 function loadDashboard() {
@@ -301,7 +369,7 @@ function loadDashboard() {
         app.innerHTML = `<p class="boot">No hay CSV en <code>public/data</code>. Copiá el reporte ahí y hacé push.</p>`;
         return;
       }
-      render(rows, files);
+      render(rows.filter((row) => usuariosArea.has(row.usuario)), files);
     })
     .catch((err: Error) => {
       app.innerHTML = `<p class="boot">No se pudo leer el reporte: ${escapeHtml(err.message)}</p>`;
