@@ -285,7 +285,7 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
       </div>
     </section>
 
-    <section class="grid-3">
+    <section class="grid-2">
       <div>
         <h2>Resultado</h2>
         ${pieChart(
@@ -306,18 +306,25 @@ function render(all: Row[], files: string[], actualPorSolicitud: Map<string, Row
           })),
         )}
       </div>
-      <div>
-        <h2>Motivos de anulación</h2>
-        ${
-          motives.length
-            ? stackedBars(
-                motives.map(([k]) => k),
-                [{ name: "Trámites", color: COLORS.anulado, data: motives.map(([, v]) => v) }],
-                { height: 260 },
-              )
-            : "<p>No hay anulados en el filtro.</p>"
-        }
-      </div>
+    </section>
+
+    <section class="motives-section">
+      <h2>Motivos de anulación</h2>
+      <p class="caption">Hasta ocho motivos más frecuentes en el último movimiento de cada trámite anulado, según los filtros.</p>
+      ${
+        motives.length
+          ? `<ul class="motives-chart" aria-label="Cantidad de trámites anulados por motivo">
+              ${motives
+                .map(([label, count]) => `<li>
+                  <div class="motives-label"><span>${escapeHtml(label)}</span><strong>${count}</strong></div>
+                  <div class="motives-track" aria-hidden="true">
+                    <div class="motives-bar" style="width: ${(count / motives[0][1]) * 100}%"></div>
+                  </div>
+                </li>`)
+                .join("")}
+            </ul>`
+          : "<p>No hay anulados en el filtro.</p>"
+      }
     </section>
 
     <section>
